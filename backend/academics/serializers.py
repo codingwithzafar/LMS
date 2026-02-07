@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from messaging.models import MessageThread
+from django.utils import timezone
 
 from .models import (
     Group,
@@ -37,8 +38,6 @@ class ContactSerializer(serializers.ModelSerializer):
         last = getattr(obj, "last_seen", None)
         if not last:
             return False
-        from django.utils import timezone
-
         return (timezone.now() - last).total_seconds() <= 120
 
 
@@ -106,7 +105,9 @@ class CreateStudentSerializer(serializers.ModelSerializer):
         user = User(**validated_data, role="STUDENT")
         user.set_password(password)
         user.save()
+
         GroupStudent.objects.create(group=group, student=user)
+
         # ✅ auto-create chat thread between teacher and student
         MessageThread.objects.get_or_create(teacher=request.user, student=user)
         return user
@@ -114,16 +115,14 @@ class CreateStudentSerializer(serializers.ModelSerializer):
 
 class HomeworkSerializer(serializers.ModelSerializer):
     submissions_count = serializers.SerializerMethodField()
-    group_number = serializers.IntegerField(source="group.group_number", read_only=True)
-    group_name = serializers.CharField(source="group.name", read_only=True)
+    group_info = serializers.SerializerMethodField()
 
     class Meta:
         model = Homework
         fields = (
             "id",
             "group",
-            "group_number",
-            "group_name",
+            "group_info",   # ✅ qo‘shildi
             "teacher",
             "title",
             "description",
@@ -137,6 +136,15 @@ class HomeworkSerializer(serializers.ModelSerializer):
     def get_submissions_count(self, obj):
         return obj.submissions.count()
 
+    def get_group_info(self, obj):
+        g = getattr(obj, "group", None)
+        if not g:
+            return None
+        return {
+            "id": g.id,
+            "group_number": g.group_number,
+            "name": g.name,
+        }
 
 
 class HomeworkCreateSerializer(serializers.ModelSerializer):
@@ -152,7 +160,7 @@ class HomeworkSubmissionSerializer(serializers.ModelSerializer):
     student_info = TeacherInfoSerializer(source="student", read_only=True)
     graded_by_info = TeacherInfoSerializer(source="graded_by", read_only=True)
 
-    # ✅ top-level qilib ham chiqaramiz (frontendga qulay)
+    # ✅ teacher panelda login ko‘rinsin
     student_username = serializers.CharField(source="student.username", read_only=True)
     student_full_name = serializers.CharField(source="student.full_name", read_only=True)
 
@@ -162,8 +170,8 @@ class HomeworkSubmissionSerializer(serializers.ModelSerializer):
             "id",
             "homework",
             "student_info",
-            "student_username",
-            "student_full_name",
+            "student_username",   # ✅ qo‘shildi
+            "student_full_name",  # ✅ qo‘shildi
             "text_answer",
             "file",
             "submitted_at",
