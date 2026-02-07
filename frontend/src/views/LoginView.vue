@@ -71,7 +71,7 @@
           </button>
 
           <div class="small muted">
-            Muammo bo‘lsa: API url (VITE_API_BASE) Netlify’da to‘g‘ri qo‘yilganini tekshiring.
+            Muammo bo‘lsa: <a href="https://t.me/codingwithulugbek">CODINGWITHULUGBEK murojaat qiling</a>
           </div>
         </form>
       </div>
