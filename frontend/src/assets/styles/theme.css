@@ -45,7 +45,6 @@ body {
 
 /* ✅ Sizda ishlatiladigan umumiy classlar bo‘lsa — chiroyli theme */
 .card {
-    background: var(--card);
     border: 1px solid var(--stroke);
     border-radius: var(--radius);
     box-shadow: var(--shadow);

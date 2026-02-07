@@ -39,7 +39,7 @@
         </div>
 
         <div class="hint muted">
-          Admin yaratish: <b>python manage.py createsuperuser</b>
+          CODINGWITHULUGBEK
         </div>
       </div>
 
