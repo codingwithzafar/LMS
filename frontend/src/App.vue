@@ -5,7 +5,7 @@
         <div class="brand" @click="$router.push({name:'home'})" style="cursor:pointer">
           <div class="brand-mark"></div>
           <div>
-            <div style="font-weight:800; letter-spacing:.2px">Academy LMS</div>
+            <div style="font-weight:800; letter-spacing:.2px">CODINGWITHULUGBEK LMS</div>
             <div class="small">Ustoz ↔ O‘quvchi • Homework • Chat</div>
           </div>
         </div>
