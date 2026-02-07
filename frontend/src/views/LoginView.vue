@@ -71,7 +71,7 @@
           </button>
 
           <div class="small muted">
-            Muammo bo‘lsa: <a href="https://t.me/codingwithulugbek">CODINGWITHULUGBEK murojaat qiling</a>
+            Muammo bo‘lsa: <a class="telegram" href="https://t.me/codingwithulugbek">CODINGWITHULUGBEK murojaat qiling</a>
           </div>
         </form>
       </div>
@@ -131,7 +131,9 @@ async function onSubmit() {
   animation: float 8s ease-in-out infinite;
   pointer-events: none;
 }
-
+.telegram{
+  color: white;
+}
 .b1 {
   left: -120px;
   top: -140px;
