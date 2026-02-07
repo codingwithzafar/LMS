@@ -144,15 +144,27 @@ class HomeworkCreateSerializer(serializers.ModelSerializer):
 
 
 class HomeworkSubmissionSerializer(serializers.ModelSerializer):
+    # ✅ oldingi structure (sizda bor) — qoldiramiz
     student_info = TeacherInfoSerializer(source="student", read_only=True)
     graded_by_info = TeacherInfoSerializer(source="graded_by", read_only=True)
+
+    # ✅ yangi: top-level login va ism
+    student_username = serializers.CharField(source="student.username", read_only=True)
+    student_full_name = serializers.CharField(source="student.full_name", read_only=True)
 
     class Meta:
         model = HomeworkSubmission
         fields = (
             "id",
             "homework",
+
+            # ✅ top-level
+            "student_username",
+            "student_full_name",
+
+            # ✅ oldingi
             "student_info",
+
             "text_answer",
             "file",
             "submitted_at",
@@ -161,7 +173,6 @@ class HomeworkSubmissionSerializer(serializers.ModelSerializer):
             "graded_by_info",
             "graded_at",
         )
-
 
 class HomeworkSubmitSerializer(serializers.ModelSerializer):
     class Meta:
