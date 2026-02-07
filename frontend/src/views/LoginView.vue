@@ -1,9 +1,6 @@
 <template>
   <div class="login-page">
     <!-- background blobs -->
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
-
     <div class="wrap card">
       <div class="left">
         <div class="brand">
@@ -115,12 +112,13 @@ async function onSubmit() {
 
 <style scoped>
 .login-page {
-  min-height: calc(100vh - 0px);
+  min-height: 100vh;
   display: grid;
   place-items: center;
   padding: 26px 16px;
-  position: relative;
-  overflow: hidden;
+
+  /* ✅ Eng muhimi: body foni ko‘rinsin */
+  background: transparent;
 }
 
 .blob {
@@ -169,7 +167,7 @@ async function onSubmit() {
 .left {
   padding: 28px;
   border-right: 1px solid rgba(255, 255, 255, .08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, .02));
+  background: transparent;
 }
 
 .right {
