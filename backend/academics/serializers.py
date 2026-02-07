@@ -114,12 +114,16 @@ class CreateStudentSerializer(serializers.ModelSerializer):
 
 class HomeworkSerializer(serializers.ModelSerializer):
     submissions_count = serializers.SerializerMethodField()
+    group_number = serializers.IntegerField(source="group.group_number", read_only=True)
+    group_name = serializers.CharField(source="group.name", read_only=True)
 
     class Meta:
         model = Homework
         fields = (
             "id",
             "group",
+            "group_number",
+            "group_name",
             "teacher",
             "title",
             "description",
@@ -134,6 +138,7 @@ class HomeworkSerializer(serializers.ModelSerializer):
         return obj.submissions.count()
 
 
+
 class HomeworkCreateSerializer(serializers.ModelSerializer):
     # ✅ create paytida group_number yuboriladi
     group_number = serializers.IntegerField(write_only=True)
@@ -144,11 +149,10 @@ class HomeworkCreateSerializer(serializers.ModelSerializer):
 
 
 class HomeworkSubmissionSerializer(serializers.ModelSerializer):
-    # ✅ oldingi structure (sizda bor) — qoldiramiz
     student_info = TeacherInfoSerializer(source="student", read_only=True)
     graded_by_info = TeacherInfoSerializer(source="graded_by", read_only=True)
 
-    # ✅ yangi: top-level login va ism
+    # ✅ top-level qilib ham chiqaramiz (frontendga qulay)
     student_username = serializers.CharField(source="student.username", read_only=True)
     student_full_name = serializers.CharField(source="student.full_name", read_only=True)
 
@@ -157,14 +161,9 @@ class HomeworkSubmissionSerializer(serializers.ModelSerializer):
         fields = (
             "id",
             "homework",
-
-            # ✅ top-level
+            "student_info",
             "student_username",
             "student_full_name",
-
-            # ✅ oldingi
-            "student_info",
-
             "text_answer",
             "file",
             "submitted_at",
@@ -173,6 +172,7 @@ class HomeworkSubmissionSerializer(serializers.ModelSerializer):
             "graded_by_info",
             "graded_at",
         )
+
 
 class HomeworkSubmitSerializer(serializers.ModelSerializer):
     class Meta:

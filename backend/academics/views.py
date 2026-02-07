@@ -115,7 +115,24 @@ class TeacherHomeworkListView(generics.ListAPIView):
     serializer_class = HomeworkSerializer
 
     def get_queryset(self):
-        return Homework.objects.filter(teacher=self.request.user).order_by("-created_at")
+        qs = (
+            Homework.objects
+            .filter(teacher=self.request.user)
+            .select_related("group")
+            .order_by("-created_at")
+        )
+
+        # ✅ optional filter: /api/teacher/homeworks/?group_number=101
+        gn = self.request.query_params.get("group_number")
+        if gn:
+            try:
+                gn_int = int(gn)
+                qs = qs.filter(group__group_number=gn_int, group__teacher=self.request.user, group__is_active=True)
+            except ValueError:
+                # noto‘g‘ri qiymat bo‘lsa filtrlamay qo‘yamiz
+                pass
+
+        return qs
 
 
 class TeacherHomeworkSubmissionsView(generics.ListAPIView):
@@ -127,7 +144,13 @@ class TeacherHomeworkSubmissionsView(generics.ListAPIView):
         hw = Homework.objects.filter(id=homework_id, teacher=self.request.user).first()
         if not hw:
             raise PermissionDenied("Not your homework.")
-        return HomeworkSubmission.objects.filter(homework=hw).order_by("-submitted_at")
+
+        return (
+            HomeworkSubmission.objects
+            .filter(homework=hw)
+            .select_related("student", "graded_by", "homework", "homework__group")
+            .order_by("-submitted_at")
+        )
 
 
 class TeacherGradeSubmissionView(APIView):
@@ -195,8 +218,24 @@ class StudentHomeworkListView(generics.ListAPIView):
     serializer_class = HomeworkSerializer
 
     def get_queryset(self):
-        group_ids = GroupStudent.objects.filter(student=self.request.user, is_active=True).values_list("group_id", flat=True)
-        return Homework.objects.filter(group_id__in=group_ids).order_by("-created_at")
+        group_qs = GroupStudent.objects.filter(student=self.request.user, is_active=True).values_list("group_id", flat=True)
+
+        qs = (
+            Homework.objects
+            .filter(group_id__in=group_qs, group__is_active=True)
+            .select_related("group", "teacher")
+            .order_by("-created_at")
+        )
+
+        # ✅ optional filter: /api/student/homeworks/?group_number=101
+        gn = self.request.query_params.get("group_number")
+        if gn:
+            try:
+                qs = qs.filter(group__group_number=int(gn))
+            except ValueError:
+                pass
+
+        return qs
 
 
 class StudentHomeworkSubmitView(generics.CreateAPIView):
