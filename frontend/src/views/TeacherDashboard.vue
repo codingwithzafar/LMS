@@ -273,46 +273,32 @@
             <div v-if="submissions[h.id] && submissions[h.id].length" class="stack" style="margin-top:10px">
               <div v-for="s in submissions[h.id]" :key="s.id" class="sub">
                 <div class="sub-left">
-                  <div style="font-weight:800">
-                    {{ s.student_username }}
-                    <span v-if="s.student_full_name" class="muted">— {{ s.student_full_name }}</span>
-                  </div>
-                  <div class="small muted">
-                    #{{ s.id }} • {{ fmtDateTime(s.submitted_at) }}
-                  </div>
-                  <div v-if="s.text_answer" class="small" style="margin-top:6px">
-                    📝 {{ s.text_answer }}
-                  </div>
+                  <div style="font-weight:700">{{ s.student_full_name || s.student_username }}</div>
+                  <div class="small">#{{ s.id }} • {{ s.submitted_at }}</div>
                 </div>
-
                 <div class="sub-actions">
                   <button v-if="s.file" class="btn btn-ghost" @click="downloadSubmissionFile(s)">Download</button>
-
                   <div class="grade">
-                    <input
-                      class="input"
-                      style="width:90px"
-                      type="number"
-                      min="1"
-                      max="5"
-                      v-model.number="gradeForm[s.id].grade"
-                      placeholder="Baho"
-                    />
-                    <input
-                      class="input"
-                      style="min-width:220px"
-                      v-model="gradeForm[s.id].teacher_comment"
-                      placeholder="Izoh..."
-                    />
+                    <input class="input" style="width:90px" type="number" v-model.number="gradeForm[s.id].grade" placeholder="Baho" />
+                    <input class="input" style="min-width:220px" v-model="gradeForm[s.id].teacher_comment" placeholder="Tavsif..." />
                     <button class="btn btn-primary" @click="saveGrade(s.id, h.id)">Save</button>
                   </div>
                 </div>
               </div>
+
+              <div v-if="submissionsNext[h.id]" class="row" style="justify-content:center; margin-top:10px">
+                <button class="btn btn-ghost" @click="loadMoreSubmissions(h.id)">Load more (20)</button>
+              </div>
             </div>
 
             <div v-else class="muted" style="margin-top:10px">Hali topshiriq yo‘q.</div>
+
           </div>
         </div>
+      </div>
+
+      <div v-if="homeworksNext" class="row" style="justify-content:center; margin-top:12px">
+        <button class="btn btn-ghost" @click="loadMoreHomeworks">Load more (20)</button>
       </div>
 
       <div v-else class="muted">Hali vazifa yo‘q.</div>
@@ -337,6 +323,8 @@ const hwCreating = ref(false)
 const createdHw = ref(null)
 const hwErr = ref('')
 const homeworks = ref([])
+const homeworksNext = ref(null)
+const submissionsNext = ref({})
 const submissions = ref({})
 const gradeForm = ref({}) // submission_id -> {grade, teacher_comment}
 const hwFile = ref(null)
@@ -376,6 +364,11 @@ const createHwPanel = ref(null)
 
 function dayName(d){
   return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d] ?? d
+}
+
+function unwrapList(data){
+  if (Array.isArray(data)) return { results: data, next: null }
+  return { results: data?.results || [], next: data?.next || null }
 }
 
 function fmtDateTime(v){
@@ -431,12 +424,18 @@ async function loadDashboard(){
   }
 }
 
-async function loadHomeworks(){
+async function loadHomeworks({ reset = true, url = null } = {}){
   hwErr.value = ''
-  const params = {}
-  if (selectedGroupNumber.value != null) params.group_number = selectedGroupNumber.value
-  const res = await api.get('/api/teacher/homeworks/', { params })
-  homeworks.value = res.data
+  const endpoint = url || '/api/teacher/homeworks/'
+  const res = await api.get(endpoint)
+  const page = unwrapList(res.data)
+  homeworksNext.value = page.next
+  homeworks.value = reset ? page.results : [...homeworks.value, ...page.results]
+}
+
+async function loadMoreHomeworks(){
+  if (!homeworksNext.value) return
+  await loadHomeworks({ reset: false, url: homeworksNext.value })
 }
 
 async function refreshAll(){
@@ -500,17 +499,18 @@ async function createHomework(){
   }
 }
 
-async function loadSubmissions(homeworkId){
+async function loadSubmissions(homeworkId, { reset = true, url = null } = {}){
   try{
-    const res = await api.get(`/api/teacher/homeworks/${homeworkId}/submissions/`)
-    submissions.value[homeworkId] = res.data
+    const endpoint = url || `/api/teacher/homeworks/${homeworkId}/submissions/`
+    const res = await api.get(endpoint)
+    const page = unwrapList(res.data)
+    submissionsNext.value[homeworkId] = page.next
+    const list = page.results || []
+    submissions.value[homeworkId] = reset ? list : [...(submissions.value[homeworkId] || []), ...list]
 
-    for (const s of (res.data || [])) {
+    for (const s of (submissions.value[homeworkId] || [])) {
       if (!gradeForm.value[s.id]) {
-        gradeForm.value[s.id] = {
-          grade: s.grade ?? null,
-          teacher_comment: s.teacher_comment ?? ''
-        }
+        gradeForm.value[s.id] = { grade: s.grade ?? null, teacher_comment: s.teacher_comment ?? '' }
       } else {
         gradeForm.value[s.id].grade = s.grade ?? null
         gradeForm.value[s.id].teacher_comment = s.teacher_comment ?? ''
@@ -519,6 +519,12 @@ async function loadSubmissions(homeworkId){
   }catch(e){
     hwErr.value = 'Submissions olishda xatolik.'
   }
+}
+
+async function loadMoreSubmissions(homeworkId){
+  const next = submissionsNext.value[homeworkId]
+  if (!next) return
+  await loadSubmissions(homeworkId, { reset: false, url: next })
 }
 
 async function saveGrade(submissionId, homeworkId){

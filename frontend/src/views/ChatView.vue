@@ -121,6 +121,11 @@
       </header>
 
       <div class="chat-body" ref="msgBox">
+          <div class="hint" v-if="(selected?.type === 'thread' && threadNext) || (selected?.type === 'group' && groupNext)">
+            <button class="btn btn-ghost" style="width:100%" @click="loadMoreMessages" :disabled="loadingMore">
+              {{ loadingMore ? 'Yuklanmoqda...' : 'Load older messages' }}
+            </button>
+          </div>
         <div v-if="!selected" class="empty">
           Chap tomondan kontakt/chat tanlang.
         </div>
@@ -231,6 +236,12 @@ const groupsLoading = ref(false)
 
 const selected = ref(null) // {type, id, payload, otherId?}
 const messages = ref([])
+const threadNext = ref(null)
+const groupNext = ref(null)
+const loadingMore = ref(false)
+const threadNext = ref(null)
+const groupNext = ref(null)
+const loadingMore = ref(false)
 const messagesLoading = ref(false)
 
 const draft = ref('')
@@ -295,6 +306,31 @@ async function loadContacts() {
     contacts.value = data
   } finally { contactsLoading.value = false }
 }
+
+function unwrapPage(data){
+  // Supports both paginated and old array responses
+  if (Array.isArray(data)) return { results: data, next: null }
+  return { results: data?.results || [], next: data?.next || null }
+}
+
+function mergeMessages(existing, incoming){
+  const map = new Map()
+  for (const m of (existing || [])) map.set(m.id, m)
+  for (const m of (incoming || [])) map.set(m.id, m)
+  const out = Array.from(map.values())
+  out.sort((a,b)=> new Date(a.created_at) - new Date(b.created_at))
+  return out
+}
+
+async function keepScrollAfterPrepend(prependCount){
+  // Keep scroll position when we prepend older messages
+  const el = msgBox.value
+  if (!el || prependCount <= 0) return
+  const prevScrollFromBottom = el.scrollHeight - el.scrollTop
+  await nextTick()
+  el.scrollTop = el.scrollHeight - prevScrollFromBottom
+}
+
 async function loadThreads() {
   threadsLoading.value = true
   try {
@@ -312,19 +348,25 @@ async function loadGroups() {
 
 async function refreshAll() {
   await Promise.all([loadContacts(), loadThreads(), loadGroups()])
-  if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id)
-  if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id)
+  if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
+  if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
 }
 
-function selectThread(t) {
+async function selectThread(t) {
   selected.value = { type: 'thread', id: t.id, payload: t }
   tab.value = 'direct'
-  loadThreadMessages(t.id)
+  messages.value = []
+  threadNext.value = null
+  groupNext.value = null
+  await loadThreadMessages(t.id, { reset: true })
 }
-function selectGroup(g) {
+async function selectGroup(g) {
   selected.value = { type: 'group', id: g.id, payload: g }
   tab.value = 'groups'
-  loadGroupMessages(g.id)
+  messages.value = []
+  threadNext.value = null
+  groupNext.value = null
+  await loadGroupMessages(g.id, { reset: true })
 }
 
 async function startDirectFromContact(c) {
@@ -332,24 +374,67 @@ async function startDirectFromContact(c) {
   await loadThreads()
   selected.value = { type: 'thread', id: data.id, payload: data, otherId: c.id }
   tab.value = 'direct'
-  await loadThreadMessages(data.id)
+  threadNext.value = null
+  groupNext.value = null
+  await loadThreadMessages(data.id, { reset: true })
 }
 
-async function loadThreadMessages(id) {
-  messagesLoading.value = true
+async function loadThreadMessages(id, { silent = false, reset = false } = {}) {
+  if (!silent) messagesLoading.value = true
   try {
-    const { data } = await api.get(`/api/threads/${id}/messages/`)
-    messages.value = data
+    const { data } = await api.get(`/api/threads/${id}/messages/`, { params: { page: 1 } })
+    const page = unwrapPage(data)
+    threadNext.value = page.next
+    const incoming = (page.results || []).slice().reverse() // oldest -> newest
+    messages.value = reset ? incoming : mergeMessages(messages.value, incoming)
     await scrollBottom()
-  } finally { messagesLoading.value = false }
+  } catch (e) {
+    if (!silent) messagesErr.value = 'Messages olishda xatolik.'
+  } finally {
+    if (!silent) messagesLoading.value = false
+  }
 }
-async function loadGroupMessages(id) {
-  messagesLoading.value = true
+
+async function loadGroupMessages(id, { silent = false, reset = false } = {}) {
+  if (!silent) messagesLoading.value = true
   try {
-    const { data } = await api.get(`/api/groups/${id}/messages/`)
-    messages.value = data
+    const { data } = await api.get(`/api/groups/${id}/messages/`, { params: { page: 1 } })
+    const page = unwrapPage(data)
+    groupNext.value = page.next
+    const incoming = (page.results || []).slice().reverse()
+    messages.value = reset ? incoming : mergeMessages(messages.value, incoming)
     await scrollBottom()
-  } finally { messagesLoading.value = false }
+  } catch (e) {
+    if (!silent) messagesErr.value = 'Messages olishda xatolik.'
+  } finally {
+    if (!silent) messagesLoading.value = false
+  }
+}
+
+async function loadMoreMessages() {
+  if (loadingMore.value) return
+  if (!selected.value) return
+
+  const nextUrl = selected.value.type === 'thread' ? threadNext.value : groupNext.value
+  if (!nextUrl) return
+
+  loadingMore.value = true
+  try {
+    const before = msgBox.value ? msgBox.value.scrollHeight : 0
+    const { data } = await api.get(nextUrl)
+    const page = unwrapPage(data)
+
+    if (selected.value.type === 'thread') threadNext.value = page.next
+    else groupNext.value = page.next
+
+    const incoming = (page.results || []).slice().reverse()
+    messages.value = [...incoming, ...messages.value]
+
+    // keep scroll position (so UI doesn't jump)
+    await keepScrollAfterPrepend(before)
+  } finally {
+    loadingMore.value = false
+  }
 }
 
 async function send() {
@@ -359,11 +444,11 @@ async function send() {
   try {
     if (selected.value.type === 'thread') {
       await api.post(`/api/threads/${selected.value.payload.id}/messages/`, { text })
-      await loadThreadMessages(selected.value.payload.id)
+      await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
       await loadThreads()
     } else if (selected.value.type === 'group') {
       await api.post(`/api/groups/${selected.value.payload.id}/messages/`, { text })
-      await loadGroupMessages(selected.value.payload.id)
+      await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
       await loadGroups()
     }
     draft.value = ''
@@ -421,11 +506,11 @@ function startPoll() {
   stopPoll()
   poll = setInterval(async () => {
     try {
-      if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id)
-      if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id)
+      if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
+      if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
       await loadContacts()
     } catch { }
-  }, 3500)
+  }, 8000)
 }
 function stopPoll() { if (poll) clearInterval(poll); poll = null }
 

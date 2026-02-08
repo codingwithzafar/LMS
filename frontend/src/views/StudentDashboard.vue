@@ -215,6 +215,10 @@
         </div>
       </div>
 
+      <div v-if="homeworksNext" class="row" style="justify-content:center; margin-top:12px">
+        <button class="btn btn-ghost" @click="loadMoreHomeworks">Load more</button>
+      </div>
+
       <div v-else class="muted">Hali vazifa yo‘q.</div>
     </div>
   </div>
@@ -230,6 +234,7 @@ const loading = ref(false)
 const error = ref('')
 
 const homeworks = ref([])
+const homeworksNext = ref(null)
 const hwErr = ref('')
 const answers = ref({})
 const files = ref({})
@@ -238,6 +243,12 @@ const mySubs = ref({}) // homework_id -> submission
 
 function dayName(d) {
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d] ?? d
+}
+
+
+function unwrapList(data){
+  if (Array.isArray(data)) return { results: data, next: null }
+  return { results: data?.results || [], next: data?.next || null }
 }
 
 function onFile(e, id) {
@@ -267,10 +278,21 @@ async function loadDashboard() {
   data.value = res.data
 }
 
-async function loadHomeworks() {
+async function loadHomeworks(reset = true, url = null) {
   hwErr.value = ''
-  const res = await api.get('/api/student/homeworks/')
-  homeworks.value = res.data
+  const res = url ? await api.get(url) : await api.get('/api/student/homeworks/', { params: { page: 1 } })
+  const page = unwrapList(res.data)
+  homeworksNext.value = page.next
+  if (reset) {
+    homeworks.value = page.results
+  } else {
+    homeworks.value = [...homeworks.value, ...page.results]
+  }
+}
+
+async function loadMoreHomeworks(){
+  if (!homeworksNext.value) return
+  await loadHomeworks(false, homeworksNext.value)
 }
 
 async function loadMySubmissions() {

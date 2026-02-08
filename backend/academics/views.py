@@ -283,6 +283,8 @@ class HomeworkAttachmentDownloadView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    throttle_scope = "files_download"
+
     def get(self, request, homework_id):
         hw = Homework.objects.select_related("group", "teacher").filter(id=homework_id).first()
         if not hw:
@@ -310,6 +312,8 @@ class SubmissionFileDownloadView(APIView):
     """
 
     permission_classes = [IsAuthenticated]
+
+    throttle_scope = "files_download"
 
     def get(self, request, submission_id):
         sub = (
