@@ -118,6 +118,12 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# -------------------- Upload limits --------------------
+# 20MB limit for any single request body/file upload.
+# (Homework attachments, submission files, etc.)
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv("DJANGO_MAX_UPLOAD_MB", "20")) * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # -------------------- CORS / CSRF --------------------

@@ -115,11 +115,22 @@ class TeacherHomeworkListView(generics.ListAPIView):
     serializer_class = HomeworkSerializer
 
     def get_queryset(self):
-        qs = Homework.objects.filter(teacher=self.request.user).select_related("group").order_by("-created_at")
+        qs = (
+            Homework.objects
+            .filter(teacher=self.request.user)
+            .select_related("group")
+            .order_by("-created_at")
+        )
 
-        group_number = self.request.query_params.get("group_number")
-        if group_number:
-            qs = qs.filter(group__group_number=int(group_number))
+        # ✅ optional filter: /api/teacher/homeworks/?group_number=101
+        gn = self.request.query_params.get("group_number")
+        if gn:
+            try:
+                gn_int = int(gn)
+                qs = qs.filter(group__group_number=gn_int, group__teacher=self.request.user, group__is_active=True)
+            except ValueError:
+                # noto‘g‘ri qiymat bo‘lsa filtrlamay qo‘yamiz
+                pass
 
         return qs
 
