@@ -97,27 +97,6 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
-<<<<<<< HEAD
-
-    # ✅ Pagination (reduces load on chat/homeworks/submissions)
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": int(os.getenv("DRF_PAGE_SIZE", "20")),
-
-    # ✅ Basic throttling (anti-spam)
-    "DEFAULT_THROTTLE_CLASSES": (
-        "rest_framework.throttling.AnonRateThrottle",
-        "rest_framework.throttling.UserRateThrottle",
-        "rest_framework.throttling.ScopedRateThrottle",
-    ),
-    "DEFAULT_THROTTLE_RATES": {
-        "anon": os.getenv("THROTTLE_ANON", "30/min"),
-        "user": os.getenv("THROTTLE_USER", "120/min"),
-        # Scoped examples (used in messaging views)
-        "chat_send": os.getenv("THROTTLE_CHAT_SEND", "30/min"),
-        "files_download": os.getenv("THROTTLE_FILES_DOWNLOAD", "120/min"),
-    },
-=======
->>>>>>> 1873afc (Initial commit)
 }
 
 SIMPLE_JWT = {

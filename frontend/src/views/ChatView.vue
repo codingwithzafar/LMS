@@ -121,14 +121,6 @@
       </header>
 
       <div class="chat-body" ref="msgBox">
-<<<<<<< HEAD
-          <div class="hint" v-if="(selected?.type === 'thread' && threadNext) || (selected?.type === 'group' && groupNext)">
-            <button class="btn btn-ghost" style="width:100%" @click="loadMoreMessages" :disabled="loadingMore">
-              {{ loadingMore ? 'Yuklanmoqda...' : 'Load older messages' }}
-            </button>
-          </div>
-=======
->>>>>>> 1873afc (Initial commit)
         <div v-if="!selected" class="empty">
           Chap tomondan kontakt/chat tanlang.
         </div>
@@ -239,15 +231,6 @@ const groupsLoading = ref(false)
 
 const selected = ref(null) // {type, id, payload, otherId?}
 const messages = ref([])
-<<<<<<< HEAD
-const threadNext = ref(null)
-const groupNext = ref(null)
-const loadingMore = ref(false)
-const threadNext = ref(null)
-const groupNext = ref(null)
-const loadingMore = ref(false)
-=======
->>>>>>> 1873afc (Initial commit)
 const messagesLoading = ref(false)
 
 const draft = ref('')
@@ -312,34 +295,6 @@ async function loadContacts() {
     contacts.value = data
   } finally { contactsLoading.value = false }
 }
-<<<<<<< HEAD
-
-function unwrapPage(data){
-  // Supports both paginated and old array responses
-  if (Array.isArray(data)) return { results: data, next: null }
-  return { results: data?.results || [], next: data?.next || null }
-}
-
-function mergeMessages(existing, incoming){
-  const map = new Map()
-  for (const m of (existing || [])) map.set(m.id, m)
-  for (const m of (incoming || [])) map.set(m.id, m)
-  const out = Array.from(map.values())
-  out.sort((a,b)=> new Date(a.created_at) - new Date(b.created_at))
-  return out
-}
-
-async function keepScrollAfterPrepend(prependCount){
-  // Keep scroll position when we prepend older messages
-  const el = msgBox.value
-  if (!el || prependCount <= 0) return
-  const prevScrollFromBottom = el.scrollHeight - el.scrollTop
-  await nextTick()
-  el.scrollTop = el.scrollHeight - prevScrollFromBottom
-}
-
-=======
->>>>>>> 1873afc (Initial commit)
 async function loadThreads() {
   threadsLoading.value = true
   try {
@@ -357,27 +312,6 @@ async function loadGroups() {
 
 async function refreshAll() {
   await Promise.all([loadContacts(), loadThreads(), loadGroups()])
-<<<<<<< HEAD
-  if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
-  if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
-}
-
-async function selectThread(t) {
-  selected.value = { type: 'thread', id: t.id, payload: t }
-  tab.value = 'direct'
-  messages.value = []
-  threadNext.value = null
-  groupNext.value = null
-  await loadThreadMessages(t.id, { reset: true })
-}
-async function selectGroup(g) {
-  selected.value = { type: 'group', id: g.id, payload: g }
-  tab.value = 'groups'
-  messages.value = []
-  threadNext.value = null
-  groupNext.value = null
-  await loadGroupMessages(g.id, { reset: true })
-=======
   if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id)
   if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id)
 }
@@ -391,7 +325,6 @@ function selectGroup(g) {
   selected.value = { type: 'group', id: g.id, payload: g }
   tab.value = 'groups'
   loadGroupMessages(g.id)
->>>>>>> 1873afc (Initial commit)
 }
 
 async function startDirectFromContact(c) {
@@ -399,69 +332,6 @@ async function startDirectFromContact(c) {
   await loadThreads()
   selected.value = { type: 'thread', id: data.id, payload: data, otherId: c.id }
   tab.value = 'direct'
-<<<<<<< HEAD
-  threadNext.value = null
-  groupNext.value = null
-  await loadThreadMessages(data.id, { reset: true })
-}
-
-async function loadThreadMessages(id, { silent = false, reset = false } = {}) {
-  if (!silent) messagesLoading.value = true
-  try {
-    const { data } = await api.get(`/api/threads/${id}/messages/`, { params: { page: 1 } })
-    const page = unwrapPage(data)
-    threadNext.value = page.next
-    const incoming = (page.results || []).slice().reverse() // oldest -> newest
-    messages.value = reset ? incoming : mergeMessages(messages.value, incoming)
-    await scrollBottom()
-  } catch (e) {
-    if (!silent) messagesErr.value = 'Messages olishda xatolik.'
-  } finally {
-    if (!silent) messagesLoading.value = false
-  }
-}
-
-async function loadGroupMessages(id, { silent = false, reset = false } = {}) {
-  if (!silent) messagesLoading.value = true
-  try {
-    const { data } = await api.get(`/api/groups/${id}/messages/`, { params: { page: 1 } })
-    const page = unwrapPage(data)
-    groupNext.value = page.next
-    const incoming = (page.results || []).slice().reverse()
-    messages.value = reset ? incoming : mergeMessages(messages.value, incoming)
-    await scrollBottom()
-  } catch (e) {
-    if (!silent) messagesErr.value = 'Messages olishda xatolik.'
-  } finally {
-    if (!silent) messagesLoading.value = false
-  }
-}
-
-async function loadMoreMessages() {
-  if (loadingMore.value) return
-  if (!selected.value) return
-
-  const nextUrl = selected.value.type === 'thread' ? threadNext.value : groupNext.value
-  if (!nextUrl) return
-
-  loadingMore.value = true
-  try {
-    const before = msgBox.value ? msgBox.value.scrollHeight : 0
-    const { data } = await api.get(nextUrl)
-    const page = unwrapPage(data)
-
-    if (selected.value.type === 'thread') threadNext.value = page.next
-    else groupNext.value = page.next
-
-    const incoming = (page.results || []).slice().reverse()
-    messages.value = [...incoming, ...messages.value]
-
-    // keep scroll position (so UI doesn't jump)
-    await keepScrollAfterPrepend(before)
-  } finally {
-    loadingMore.value = false
-  }
-=======
   await loadThreadMessages(data.id)
 }
 
@@ -480,7 +350,6 @@ async function loadGroupMessages(id) {
     messages.value = data
     await scrollBottom()
   } finally { messagesLoading.value = false }
->>>>>>> 1873afc (Initial commit)
 }
 
 async function send() {
@@ -490,19 +359,11 @@ async function send() {
   try {
     if (selected.value.type === 'thread') {
       await api.post(`/api/threads/${selected.value.payload.id}/messages/`, { text })
-<<<<<<< HEAD
-      await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
-      await loadThreads()
-    } else if (selected.value.type === 'group') {
-      await api.post(`/api/groups/${selected.value.payload.id}/messages/`, { text })
-      await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
-=======
       await loadThreadMessages(selected.value.payload.id)
       await loadThreads()
     } else if (selected.value.type === 'group') {
       await api.post(`/api/groups/${selected.value.payload.id}/messages/`, { text })
       await loadGroupMessages(selected.value.payload.id)
->>>>>>> 1873afc (Initial commit)
       await loadGroups()
     }
     draft.value = ''
@@ -560,19 +421,11 @@ function startPoll() {
   stopPoll()
   poll = setInterval(async () => {
     try {
-<<<<<<< HEAD
-      if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
-      if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
-      await loadContacts()
-    } catch { }
-  }, 8000)
-=======
       if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id)
       if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id)
       await loadContacts()
     } catch { }
   }, 3500)
->>>>>>> 1873afc (Initial commit)
 }
 function stopPoll() { if (poll) clearInterval(poll); poll = null }
 
@@ -951,7 +804,3 @@ onUnmounted(() => stopPoll())
   }
 }
 </style>
-<<<<<<< HEAD
-// deploy-test
-=======
->>>>>>> 1873afc (Initial commit)
