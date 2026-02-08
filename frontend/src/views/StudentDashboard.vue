@@ -215,10 +215,13 @@
         </div>
       </div>
 
+<<<<<<< HEAD
       <div v-if="homeworksNext" class="row" style="justify-content:center; margin-top:12px">
         <button class="btn btn-ghost" @click="loadMoreHomeworks">Load more</button>
       </div>
 
+=======
+>>>>>>> 1873afc (Initial commit)
       <div v-else class="muted">Hali vazifa yo‘q.</div>
     </div>
   </div>
@@ -234,7 +237,10 @@ const loading = ref(false)
 const error = ref('')
 
 const homeworks = ref([])
+<<<<<<< HEAD
 const homeworksNext = ref(null)
+=======
+>>>>>>> 1873afc (Initial commit)
 const hwErr = ref('')
 const answers = ref({})
 const files = ref({})
@@ -245,12 +251,15 @@ function dayName(d) {
   return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d] ?? d
 }
 
+<<<<<<< HEAD
 
 function unwrapList(data){
   if (Array.isArray(data)) return { results: data, next: null }
   return { results: data?.results || [], next: data?.next || null }
 }
 
+=======
+>>>>>>> 1873afc (Initial commit)
 function onFile(e, id) {
   const f = e.target.files && e.target.files[0]
   if (f) files.value[id] = f
@@ -278,6 +287,7 @@ async function loadDashboard() {
   data.value = res.data
 }
 
+<<<<<<< HEAD
 async function loadHomeworks(reset = true, url = null) {
   hwErr.value = ''
   const res = url ? await api.get(url) : await api.get('/api/student/homeworks/', { params: { page: 1 } })
@@ -293,6 +303,12 @@ async function loadHomeworks(reset = true, url = null) {
 async function loadMoreHomeworks(){
   if (!homeworksNext.value) return
   await loadHomeworks(false, homeworksNext.value)
+=======
+async function loadHomeworks() {
+  hwErr.value = ''
+  const res = await api.get('/api/student/homeworks/')
+  homeworks.value = res.data
+>>>>>>> 1873afc (Initial commit)
 }
 
 async function loadMySubmissions() {

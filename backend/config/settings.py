@@ -97,6 +97,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
+<<<<<<< HEAD
 
     # ✅ Pagination (reduces load on chat/homeworks/submissions)
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
@@ -115,6 +116,8 @@ REST_FRAMEWORK = {
         "chat_send": os.getenv("THROTTLE_CHAT_SEND", "30/min"),
         "files_download": os.getenv("THROTTLE_FILES_DOWNLOAD", "120/min"),
     },
+=======
+>>>>>>> 1873afc (Initial commit)
 }
 
 SIMPLE_JWT = {

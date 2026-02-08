@@ -121,11 +121,14 @@
       </header>
 
       <div class="chat-body" ref="msgBox">
+<<<<<<< HEAD
           <div class="hint" v-if="(selected?.type === 'thread' && threadNext) || (selected?.type === 'group' && groupNext)">
             <button class="btn btn-ghost" style="width:100%" @click="loadMoreMessages" :disabled="loadingMore">
               {{ loadingMore ? 'Yuklanmoqda...' : 'Load older messages' }}
             </button>
           </div>
+=======
+>>>>>>> 1873afc (Initial commit)
         <div v-if="!selected" class="empty">
           Chap tomondan kontakt/chat tanlang.
         </div>
@@ -236,12 +239,15 @@ const groupsLoading = ref(false)
 
 const selected = ref(null) // {type, id, payload, otherId?}
 const messages = ref([])
+<<<<<<< HEAD
 const threadNext = ref(null)
 const groupNext = ref(null)
 const loadingMore = ref(false)
 const threadNext = ref(null)
 const groupNext = ref(null)
 const loadingMore = ref(false)
+=======
+>>>>>>> 1873afc (Initial commit)
 const messagesLoading = ref(false)
 
 const draft = ref('')
@@ -306,6 +312,7 @@ async function loadContacts() {
     contacts.value = data
   } finally { contactsLoading.value = false }
 }
+<<<<<<< HEAD
 
 function unwrapPage(data){
   // Supports both paginated and old array responses
@@ -331,6 +338,8 @@ async function keepScrollAfterPrepend(prependCount){
   el.scrollTop = el.scrollHeight - prevScrollFromBottom
 }
 
+=======
+>>>>>>> 1873afc (Initial commit)
 async function loadThreads() {
   threadsLoading.value = true
   try {
@@ -348,6 +357,7 @@ async function loadGroups() {
 
 async function refreshAll() {
   await Promise.all([loadContacts(), loadThreads(), loadGroups()])
+<<<<<<< HEAD
   if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
   if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
 }
@@ -367,6 +377,21 @@ async function selectGroup(g) {
   threadNext.value = null
   groupNext.value = null
   await loadGroupMessages(g.id, { reset: true })
+=======
+  if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id)
+  if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id)
+}
+
+function selectThread(t) {
+  selected.value = { type: 'thread', id: t.id, payload: t }
+  tab.value = 'direct'
+  loadThreadMessages(t.id)
+}
+function selectGroup(g) {
+  selected.value = { type: 'group', id: g.id, payload: g }
+  tab.value = 'groups'
+  loadGroupMessages(g.id)
+>>>>>>> 1873afc (Initial commit)
 }
 
 async function startDirectFromContact(c) {
@@ -374,6 +399,7 @@ async function startDirectFromContact(c) {
   await loadThreads()
   selected.value = { type: 'thread', id: data.id, payload: data, otherId: c.id }
   tab.value = 'direct'
+<<<<<<< HEAD
   threadNext.value = null
   groupNext.value = null
   await loadThreadMessages(data.id, { reset: true })
@@ -435,6 +461,26 @@ async function loadMoreMessages() {
   } finally {
     loadingMore.value = false
   }
+=======
+  await loadThreadMessages(data.id)
+}
+
+async function loadThreadMessages(id) {
+  messagesLoading.value = true
+  try {
+    const { data } = await api.get(`/api/threads/${id}/messages/`)
+    messages.value = data
+    await scrollBottom()
+  } finally { messagesLoading.value = false }
+}
+async function loadGroupMessages(id) {
+  messagesLoading.value = true
+  try {
+    const { data } = await api.get(`/api/groups/${id}/messages/`)
+    messages.value = data
+    await scrollBottom()
+  } finally { messagesLoading.value = false }
+>>>>>>> 1873afc (Initial commit)
 }
 
 async function send() {
@@ -444,11 +490,19 @@ async function send() {
   try {
     if (selected.value.type === 'thread') {
       await api.post(`/api/threads/${selected.value.payload.id}/messages/`, { text })
+<<<<<<< HEAD
       await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
       await loadThreads()
     } else if (selected.value.type === 'group') {
       await api.post(`/api/groups/${selected.value.payload.id}/messages/`, { text })
       await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
+=======
+      await loadThreadMessages(selected.value.payload.id)
+      await loadThreads()
+    } else if (selected.value.type === 'group') {
+      await api.post(`/api/groups/${selected.value.payload.id}/messages/`, { text })
+      await loadGroupMessages(selected.value.payload.id)
+>>>>>>> 1873afc (Initial commit)
       await loadGroups()
     }
     draft.value = ''
@@ -506,11 +560,19 @@ function startPoll() {
   stopPoll()
   poll = setInterval(async () => {
     try {
+<<<<<<< HEAD
       if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id, { silent: true, reset: false })
       if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id, { silent: true, reset: false })
       await loadContacts()
     } catch { }
   }, 8000)
+=======
+      if (selected.value?.type === 'thread') await loadThreadMessages(selected.value.payload.id)
+      if (selected.value?.type === 'group') await loadGroupMessages(selected.value.payload.id)
+      await loadContacts()
+    } catch { }
+  }, 3500)
+>>>>>>> 1873afc (Initial commit)
 }
 function stopPoll() { if (poll) clearInterval(poll); poll = null }
 
@@ -889,4 +951,7 @@ onUnmounted(() => stopPoll())
   }
 }
 </style>
+<<<<<<< HEAD
 // deploy-test
+=======
+>>>>>>> 1873afc (Initial commit)

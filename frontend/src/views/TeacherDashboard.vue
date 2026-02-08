@@ -273,6 +273,7 @@
             <div v-if="submissions[h.id] && submissions[h.id].length" class="stack" style="margin-top:10px">
               <div v-for="s in submissions[h.id]" :key="s.id" class="sub">
                 <div class="sub-left">
+<<<<<<< HEAD
                   <div style="font-weight:700">{{ s.student_full_name || s.student_username }}</div>
                   <div class="small">#{{ s.id }} • {{ s.submitted_at }}</div>
                 </div>
@@ -281,10 +282,44 @@
                   <div class="grade">
                     <input class="input" style="width:90px" type="number" v-model.number="gradeForm[s.id].grade" placeholder="Baho" />
                     <input class="input" style="min-width:220px" v-model="gradeForm[s.id].teacher_comment" placeholder="Tavsif..." />
+=======
+                  <div style="font-weight:800">
+                    {{ s.student_username }}
+                    <span v-if="s.student_full_name" class="muted">— {{ s.student_full_name }}</span>
+                  </div>
+                  <div class="small muted">
+                    #{{ s.id }} • {{ fmtDateTime(s.submitted_at) }}
+                  </div>
+                  <div v-if="s.text_answer" class="small" style="margin-top:6px">
+                    📝 {{ s.text_answer }}
+                  </div>
+                </div>
+
+                <div class="sub-actions">
+                  <button v-if="s.file" class="btn btn-ghost" @click="downloadSubmissionFile(s)">Download</button>
+
+                  <div class="grade">
+                    <input
+                      class="input"
+                      style="width:90px"
+                      type="number"
+                      min="1"
+                      max="5"
+                      v-model.number="gradeForm[s.id].grade"
+                      placeholder="Baho"
+                    />
+                    <input
+                      class="input"
+                      style="min-width:220px"
+                      v-model="gradeForm[s.id].teacher_comment"
+                      placeholder="Izoh..."
+                    />
+>>>>>>> 1873afc (Initial commit)
                     <button class="btn btn-primary" @click="saveGrade(s.id, h.id)">Save</button>
                   </div>
                 </div>
               </div>
+<<<<<<< HEAD
 
               <div v-if="submissionsNext[h.id]" class="row" style="justify-content:center; margin-top:10px">
                 <button class="btn btn-ghost" @click="loadMoreSubmissions(h.id)">Load more (20)</button>
@@ -293,14 +328,22 @@
 
             <div v-else class="muted" style="margin-top:10px">Hali topshiriq yo‘q.</div>
 
+=======
+            </div>
+
+            <div v-else class="muted" style="margin-top:10px">Hali topshiriq yo‘q.</div>
+>>>>>>> 1873afc (Initial commit)
           </div>
         </div>
       </div>
 
+<<<<<<< HEAD
       <div v-if="homeworksNext" class="row" style="justify-content:center; margin-top:12px">
         <button class="btn btn-ghost" @click="loadMoreHomeworks">Load more (20)</button>
       </div>
 
+=======
+>>>>>>> 1873afc (Initial commit)
       <div v-else class="muted">Hali vazifa yo‘q.</div>
     </div>
   </div>
@@ -323,8 +366,11 @@ const hwCreating = ref(false)
 const createdHw = ref(null)
 const hwErr = ref('')
 const homeworks = ref([])
+<<<<<<< HEAD
 const homeworksNext = ref(null)
 const submissionsNext = ref({})
+=======
+>>>>>>> 1873afc (Initial commit)
 const submissions = ref({})
 const gradeForm = ref({}) // submission_id -> {grade, teacher_comment}
 const hwFile = ref(null)
@@ -366,11 +412,14 @@ function dayName(d){
   return ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][d] ?? d
 }
 
+<<<<<<< HEAD
 function unwrapList(data){
   if (Array.isArray(data)) return { results: data, next: null }
   return { results: data?.results || [], next: data?.next || null }
 }
 
+=======
+>>>>>>> 1873afc (Initial commit)
 function fmtDateTime(v){
   if (!v) return ''
   const d = new Date(v)
@@ -424,6 +473,7 @@ async function loadDashboard(){
   }
 }
 
+<<<<<<< HEAD
 async function loadHomeworks({ reset = true, url = null } = {}){
   hwErr.value = ''
   const endpoint = url || '/api/teacher/homeworks/'
@@ -436,6 +486,14 @@ async function loadHomeworks({ reset = true, url = null } = {}){
 async function loadMoreHomeworks(){
   if (!homeworksNext.value) return
   await loadHomeworks({ reset: false, url: homeworksNext.value })
+=======
+async function loadHomeworks(){
+  hwErr.value = ''
+  const params = {}
+  if (selectedGroupNumber.value != null) params.group_number = selectedGroupNumber.value
+  const res = await api.get('/api/teacher/homeworks/', { params })
+  homeworks.value = res.data
+>>>>>>> 1873afc (Initial commit)
 }
 
 async function refreshAll(){
@@ -499,6 +557,7 @@ async function createHomework(){
   }
 }
 
+<<<<<<< HEAD
 async function loadSubmissions(homeworkId, { reset = true, url = null } = {}){
   try{
     const endpoint = url || `/api/teacher/homeworks/${homeworkId}/submissions/`
@@ -511,6 +570,19 @@ async function loadSubmissions(homeworkId, { reset = true, url = null } = {}){
     for (const s of (submissions.value[homeworkId] || [])) {
       if (!gradeForm.value[s.id]) {
         gradeForm.value[s.id] = { grade: s.grade ?? null, teacher_comment: s.teacher_comment ?? '' }
+=======
+async function loadSubmissions(homeworkId){
+  try{
+    const res = await api.get(`/api/teacher/homeworks/${homeworkId}/submissions/`)
+    submissions.value[homeworkId] = res.data
+
+    for (const s of (res.data || [])) {
+      if (!gradeForm.value[s.id]) {
+        gradeForm.value[s.id] = {
+          grade: s.grade ?? null,
+          teacher_comment: s.teacher_comment ?? ''
+        }
+>>>>>>> 1873afc (Initial commit)
       } else {
         gradeForm.value[s.id].grade = s.grade ?? null
         gradeForm.value[s.id].teacher_comment = s.teacher_comment ?? ''
@@ -521,12 +593,15 @@ async function loadSubmissions(homeworkId, { reset = true, url = null } = {}){
   }
 }
 
+<<<<<<< HEAD
 async function loadMoreSubmissions(homeworkId){
   const next = submissionsNext.value[homeworkId]
   if (!next) return
   await loadSubmissions(homeworkId, { reset: false, url: next })
 }
 
+=======
+>>>>>>> 1873afc (Initial commit)
 async function saveGrade(submissionId, homeworkId){
   try{
     const body = {

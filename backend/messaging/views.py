@@ -63,7 +63,10 @@ class ThreadStartView(APIView):
 class MessageListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = MessageSerializer
+<<<<<<< HEAD
     throttle_scope = "chat_send"
+=======
+>>>>>>> 1873afc (Initial commit)
 
     def _get_thread(self):
         thread_id = self.kwargs["thread_id"]
@@ -75,7 +78,11 @@ class MessageListCreateView(generics.ListCreateAPIView):
     def get_queryset(self):
         thread = self._get_thread()
         _ensure_member(thread, self.request.user)
+<<<<<<< HEAD
         return Message.objects.filter(thread=thread).select_related("sender").order_by("-created_at")
+=======
+        return Message.objects.filter(thread=thread).select_related("sender").order_by("created_at")
+>>>>>>> 1873afc (Initial commit)
 
     def perform_create(self, serializer):
         thread = self._get_thread()
@@ -170,6 +177,7 @@ class ChatGroupAddMembersView(APIView):
         return Response({"ok": True, "added": member_ids})
 
 
+<<<<<<< HEAD
 class ChatGroupMessageListCreateView(generics.ListCreateAPIView):
     """Group chat messages (paginated)."""
 
@@ -179,10 +187,17 @@ class ChatGroupMessageListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         group_id = self.kwargs["group_id"]
+=======
+class ChatGroupMessageListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, group_id):
+>>>>>>> 1873afc (Initial commit)
         try:
             group = ChatGroup.objects.get(id=group_id)
         except ChatGroup.DoesNotExist:
             raise ValidationError({"group_id": "Group not found"})
+<<<<<<< HEAD
         _ensure_group_member(group, self.request.user)
         # newest-first for pagination efficiency
         return ChatGroupMessage.objects.filter(group=group).select_related("sender").order_by("-created_at")
@@ -194,10 +209,18 @@ class ChatGroupMessageListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         group_id = self.kwargs["group_id"]
+=======
+        _ensure_group_member(group, request.user)
+        qs = ChatGroupMessage.objects.filter(group=group).select_related("sender").order_by("created_at")
+        return Response(ChatGroupMessageSerializer(qs, many=True, context={"request": request}).data)
+
+    def post(self, request, group_id):
+>>>>>>> 1873afc (Initial commit)
         try:
             group = ChatGroup.objects.get(id=group_id)
         except ChatGroup.DoesNotExist:
             raise ValidationError({"group_id": "Group not found"})
+<<<<<<< HEAD
         _ensure_group_member(group, self.request.user)
 
         text = (self.request.data.get("text") or "").strip()
@@ -205,3 +228,13 @@ class ChatGroupMessageListCreateView(generics.ListCreateAPIView):
             raise ValidationError({"text": "Message text is required."})
 
         serializer.save(group=group, sender=self.request.user, text=text)
+=======
+        _ensure_group_member(group, request.user)
+
+        text = (request.data.get("text") or "").strip()
+        if not text:
+            raise ValidationError({"text": "Message text is required."})
+
+        msg = ChatGroupMessage.objects.create(group=group, sender=request.user, text=text)
+        return Response(ChatGroupMessageSerializer(msg, context={"request": request}).data, status=201)
+>>>>>>> 1873afc (Initial commit)
